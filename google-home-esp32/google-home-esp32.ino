@@ -127,10 +127,14 @@ void checkForTime() {
   static unsigned long pastTime = 0;
   if(millis() - pastTime >= 20000) {
     Serial.println("sending");
-    String buffer = "!" + ((String)(float(round(bme.readTemperature()*10))/10.0));
-    buffer += "; " + ((String)(float(round(bme.readHumidity()*10))/10.0));
-    buffer += "; " + ((String)(float(round(bme.readPressure()*10))/10.0));
-    buffer.toCharArray(replyBuffer, sizeof(buffer));
+    float temp_c = float(round(bme.readTemperature()*10)/10.0);
+    float hum_c = float(round(bme.readHumidity()*10)/10.0);
+    float press_c = float(round(bme.readPressure()*10)/10.0);
+    
+    String buffer = "!" + (String) temp_c;
+    buffer += "; " + (String)hum_c;
+    buffer += "; " + (String) press_c;
+    buffer.toCharArray(replyBuffer, buffer.length());
     
     udp.beginPacket(piIP, UDPPort);
     udp.write(replyBuffer);
@@ -144,6 +148,8 @@ void onButtonPressed(AdafruitIO_Data *data) {
   Serial.println("Got data from onButtonPressed: " + dataVal);
   
   if(dataVal == "ON") {
+    servo.write(95);
+    delay(200);
     for(int i = 92; i > 54; i--) {
       servo.write(i);
       delay(3);
@@ -159,6 +165,8 @@ void onButtonPressed(AdafruitIO_Data *data) {
   
   
   else if(dataVal == "OFF") {
+    servo.write(95);
+    delay(200);
     for(int i = 92; i < 141; i++) {
       servo.write(i);
       delay(3);
@@ -179,6 +187,8 @@ void onButtonPressed(AdafruitIO_Data *data) {
 
   
   else if(dataVal == "BONANZA") {
+    servo.write(95);
+    delay(200);
     for(int i = 0; i < 5; i++) {
       for(int i = 92; i < 151; i++) {
         servo.write(i);
