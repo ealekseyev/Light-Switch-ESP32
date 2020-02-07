@@ -1,13 +1,13 @@
 /*
  * Reply codes: from ESP8266:
  * ! @ # $ % ^ & *
- * ! - temperature, humidity, pressure. Ex: "!22.3; 76.4; 101.3" Format: "!temp; hum; press"
+ * ! - temperature, humidity, pressure. Ex: "!22.3;76.4;101.3" Format: "!temp; hum; press"
  * @ - panic, ip other than server has sent something to esp. Ex: "@192.168.1.137" Format: "@IPADDRESS
  * 
  * 
  */
 #include <AdafruitIO_WiFi.h>
-#include <ESP8266mDNS.h>
+//#include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <Adafruit_Sensor.h>
@@ -34,7 +34,7 @@ const uint8_t bmeAddr = 0x76;
 IPAddress piIP(192, 168, 1, 150);
 const char* ESPhostname = "esp8266";
 const unsigned int UDPPort = 61205;
-char* replyBuffer = "null";
+char* replyBuffer = "XX.Y;ZZ.Q;AAA.B";
 
 //static ip config
 IPAddress localIP(192, 168, 1, 162);
@@ -66,8 +66,8 @@ void setup() {
   udp.begin(UDPPort);
 
   // start MDNS server
-  MDNS.begin(ESPhostname, localIP);
-  MDNS.addService("http", "tcp", 80);
+  //MDNS.begin(ESPhostname, localIP);
+  //MDNS.addService("http", "tcp", 80);
 
   // start OTA programming
   ArduinoOTA.onStart([]() {
@@ -94,11 +94,8 @@ void loop() {
   // stay connected to adafruit.io
   // keep running MDNS and OTA server
   io.run();
-  MDNS.update();
-  io.run();
+  //MDNS.update();
   ArduinoOTA.handle();
-  io.run();
-
   // check for the time, every 20 s send UDP
   checkForTime();
 }
@@ -129,12 +126,14 @@ void checkForTime() {
     Serial.println("sending");
     float temp_c = float(round(bme.readTemperature()*10)/10.0);
     float hum_c = float(round(bme.readHumidity()*10)/10.0);
-    float press_c = float(round(bme.readPressure()*10)/10.0);
+    float press_c = float(round(bme.readPressure()/10)/10.0);
     
     String buffer = "!" + (String) temp_c;
-    buffer += "; " + (String)hum_c;
-    buffer += "; " + (String) press_c;
+    buffer += ";" + (String)hum_c;
+    buffer += ";" + (String) press_c;
     buffer.toCharArray(replyBuffer, buffer.length());
+    Serial.println(buffer);
+    Serial.println(replyBuffer);
     
     udp.beginPacket(piIP, UDPPort);
     udp.write(replyBuffer);
@@ -149,7 +148,7 @@ void onButtonPressed(AdafruitIO_Data *data) {
   
   if(dataVal == "ON") {
     servo.write(95);
-    delay(200);
+    delay(400);
     for(int i = 92; i > 54; i--) {
       servo.write(i);
       delay(3);
@@ -159,14 +158,14 @@ void onButtonPressed(AdafruitIO_Data *data) {
       delay(3);
     }
     servo.write(95);
-    delay(200);
+    delay(400);
     digitalWrite(12, LOW);
   }
   
   
   else if(dataVal == "OFF") {
     servo.write(95);
-    delay(200);
+    delay(400);
     for(int i = 92; i < 141; i++) {
       servo.write(i);
       delay(3);
@@ -176,7 +175,7 @@ void onButtonPressed(AdafruitIO_Data *data) {
       delay(3);
     }
     servo.write(95);
-    delay(200);
+    delay(400);
     digitalWrite(12, LOW);
   }
 
