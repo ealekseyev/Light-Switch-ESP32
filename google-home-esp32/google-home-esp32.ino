@@ -7,9 +7,8 @@
  * 
  */
 #include <AdafruitIO_WiFi.h>
-//#include <ESP8266mDNS.h>
+#include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
-#include <ArduinoOTA.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <Servo.h>
@@ -66,36 +65,29 @@ void setup() {
   udp.begin(UDPPort);
 
   // start MDNS server
-  //MDNS.begin(ESPhostname, localIP);
-  //MDNS.addService("http", "tcp", 80);
-
-  // start OTA programming
-  ArduinoOTA.onStart([]() {
-    String type;
-    if (ArduinoOTA.getCommand() == U_FLASH) {
-      type = "sketch";
-    } else { // U_FS
-      type = "filesystem";
-    }
-  });
-  ArduinoOTA.begin();
+  MDNS.begin(ESPhostname, localIP);
+  MDNS.addService("http", "tcp", 80);
 
   servo.attach(12);
-  servo.write(90);
   delay(300);
-  servo.write(100);
-  delay(300);
-  servo.write(95);
+  
+  while(true) {
+    while(!Serial.available()) {}
+    char* buff = "";
+    for(int i = 0; i < Serial.available(); i++) {
+      buff[i] += Serial.read();
+    }
+    servo.write((int)buff);
+  }
   delay(300);
   digitalWrite(12, LOW);
 }
 
 void loop() {
   // stay connected to adafruit.io
-  // keep running MDNS and OTA server
   io.run();
-  //MDNS.update();
-  ArduinoOTA.handle();
+  // keep running MDNS server
+  MDNS.update();
   // check for the time, every 20 s send UDP
   checkForTime();
 }
@@ -149,15 +141,15 @@ void onButtonPressed(AdafruitIO_Data *data) {
   if(dataVal == "ON") {
     servo.write(95);
     delay(400);
-    for(int i = 92; i > 54; i--) {
+    /*for(int i = 92; i > 54; i--) {
       servo.write(i);
       delay(3);
     }
     for(int i= 55; i < 95; i++) {
       servo.write(i);
       delay(3);
-    }
-    servo.write(95);
+    }*/
+    servo.write(50);
     delay(400);
     digitalWrite(12, LOW);
   }
@@ -166,15 +158,15 @@ void onButtonPressed(AdafruitIO_Data *data) {
   else if(dataVal == "OFF") {
     servo.write(95);
     delay(400);
-    for(int i = 92; i < 141; i++) {
+    /*for(int i = 92; i < 141; i++) {
       servo.write(i);
       delay(3);
     }
     for(int i = 140; i > 95; i--) {
       servo.write(i);
       delay(3);
-    }
-    servo.write(95);
+    }*/
+    servo.write(140);
     delay(400);
     digitalWrite(12, LOW);
   }
