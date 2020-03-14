@@ -3,8 +3,6 @@
  * ! @ # $ % ^ & *
  * ! - temperature, humidity, pressure. Ex: "!22.3;76.4;101.3" Format: "!temp; hum; press"
  * @ - panic, ip other than server has sent something to esp. Ex: "@192.168.1.137" Format: "@IPADDRESS
- * 
- * 
  */
 #include <AdafruitIO_WiFi.h>
 #include <ESP8266mDNS.h>
@@ -23,7 +21,6 @@ AdafruitIO_WiFi io(IO_USERNAME, IO_KEY, WIFI_SSID, WIFI_PASS);
 AdafruitIO_Feed *esp32control = io.feed("LED");
 
 WiFiUDP udp;
-
 Servo servo;
 
 Adafruit_BME280 bme;
@@ -35,11 +32,15 @@ const char* ESPhostname = "esp8266";
 const unsigned int UDPPort = 61205;
 char* replyBuffer = "XX.Y;ZZ.Q;AAA.B";
 
-//static ip config
+// static ip config
 IPAddress localIP(192, 168, 1, 162);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 IPAddress primaryDNS(1, 1, 1, 1);
+
+int offPos = 140;
+int neutralPos = 100;
+int onPos = 50;
 
 void setup() {
   Serial.begin(115200);
@@ -65,20 +66,12 @@ void setup() {
   udp.begin(UDPPort);
 
   // start MDNS server
-  MDNS.begin(ESPhostname, localIP);
-  MDNS.addService("http", "tcp", 80);
+  //MDNS.begin(ESPhostname, localIP);
+  //MDNS.addService("http", "tcp", 80);
 
   servo.attach(12);
-  delay(300);
-  
-  while(true) {
-    while(!Serial.available()) {}
-    char* buff = "";
-    for(int i = 0; i < Serial.available(); i++) {
-      buff[i] += Serial.read();
-    }
-    servo.write((int)buff);
-  }
+  delay(100);
+  servo.write(100);
   delay(300);
   digitalWrite(12, LOW);
 }
@@ -87,7 +80,7 @@ void loop() {
   // stay connected to adafruit.io
   io.run();
   // keep running MDNS server
-  MDNS.update();
+  //MDNS.update();
   // check for the time, every 20 s send UDP
   checkForTime();
 }
@@ -139,67 +132,44 @@ void onButtonPressed(AdafruitIO_Data *data) {
   Serial.println("Got data from onButtonPressed: " + dataVal);
   
   if(dataVal == "ON") {
-    servo.write(95);
-    delay(400);
-    /*for(int i = 92; i > 54; i--) {
-      servo.write(i);
-      delay(3);
-    }
-    for(int i= 55; i < 95; i++) {
-      servo.write(i);
-      delay(3);
-    }*/
-    servo.write(50);
-    delay(400);
-    digitalWrite(12, LOW);
+      turnLightsOn();
   }
-  
   
   else if(dataVal == "OFF") {
-    servo.write(95);
-    delay(400);
-    /*for(int i = 92; i < 141; i++) {
-      servo.write(i);
-      delay(3);
-    }
-    for(int i = 140; i > 95; i--) {
-      servo.write(i);
-      delay(3);
-    }*/
-    servo.write(140);
-    delay(400);
-    digitalWrite(12, LOW);
-  }
-
+    turnLightsOff();
+  } 
   
   else if(dataVal == "RESTART") {
     ESP.restart();
   }
+}
 
-  
-  else if(dataVal == "BONANZA") {
-    servo.write(95);
-    delay(200);
-    for(int i = 0; i < 5; i++) {
-      for(int i = 92; i < 151; i++) {
-        servo.write(i);
-        delay(2);
-      }
-      for(int i = 150; i > 95; i--) {
-        servo.write(i);
-        delay(2);
-      }
-      for(int i = 92; i > 44; i--) {
-        servo.write(i);
-        delay(2);
-      }
-      for(int i= 45; i < 95; i++) {
-        servo.write(i);
-        delay(2);
-      }
-    }
-    servo.write(95);
-    delay(200);
-    digitalWrite(12, LOW);
+void turnLightsOn() {
+  servo.write(neutralPos);
+  delay(100);
+  for(int i = neutralPos; i > onPos; i-=10) {
+    servo.write(i);
+    delay(30);
   }
+  for(int i = onPos; i < neutralPos; i+=5) {
+    servo.write(i);
+    delay(30);
+  }
+  delay(300);
+  digitalWrite(12, LOW);
+}
+
+void turnLightsOff() {
+  servo.write(neutralPos);
+  delay(100);
+  for(int i = neutralPos; i < offPos; i+=10) {
+    servo.write(i);
+    delay(30);
+  }
+  for(int i = onPos; i > neutralPos; i-=5) {
+    servo.write(i);
+    delay(30);
+  }
+  delay(300);
+  digitalWrite(12, LOW);
 }
