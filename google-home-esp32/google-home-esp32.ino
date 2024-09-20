@@ -12,7 +12,7 @@
 #include <Servo.h>
 
 #define IO_USERNAME  "evan_not_devin"
-#define IO_KEY       "aio_MtpQ88nhTAV5dXXu2UBFdIpNijcA"
+#define IO_KEY       "-"
 
 const char* WIFI_SSID = "Despacito-1";
 const char* WIFI_PASS = "kauai2018";
